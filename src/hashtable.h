@@ -47,6 +47,15 @@ typedef void (*destroy_key)(void* key);
 
 typedef void (*destroy_val)(void* val);
 
+/* Pointer to a function that prints key/value pairs using printf.
+ * 
+ * @param   key
+ * @param   val
+ *
+ * @return  void
+ */
+typedef void (*print_func)( void* key, void* val );
+
 /* createHT
  *
  * Function to create a new HashTable. Asserts that size and LoadFactor are
@@ -55,18 +64,17 @@ typedef void (*destroy_val)(void* val);
  * provide them, it becomes the users responsibility to iterate over the table
  * and free any alllocated space.
  *
- * @param   size        initial size
- * @param   loadFactor  initial load factor
  * @param   hash        function for hashing key/value pairs
  * @param   comp        function for comparing key/value pairs
  * @param   key         function for destroying the key of key/value pairs
  * @param   val         function for destroying the value of key/value pairs
+ * @param   print       function for printing key/value pairs
  *
  * @return  success     newly created HashTable struct
  * @return  failure     NULL
  */ 
 
-HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val val);
+HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val val, print_func print);
 
 /* destroyHT
  *
@@ -93,9 +101,65 @@ void destroyHT(HashTable table);
  * @param   table       HashTable to insert key/value Pair into
  * @param   key         key to hash
  * @param   val         value of key
+ *
+ * @return  success     1
+ * @return  failure     0
  */
 
 int insertHT(HashTable table, void *key, void *val);
+
+/* searchHT
+ *
+ * Searches the passed in HashTable for a key and returns a pointer to the value.
+ * If the key is not found or the search is unsuccessful, the function returns 
+ * NULL. This only returns the first found insterest for the designated key.
+ *
+ * @param   table       HashTable to search
+ * @param   key         key in a key/value pair
+ *
+ * @return  success     void * (pointer)
+ * @return  failure     NULL
+ */
+
+void *searchHT(HashTable table, void *key);  
+
+/* removeHT
+ *
+ * Searches the hashtable for the first occurence of a key and removes it. If
+ * key destroy or value destroy functions have been defined, they will be called
+ * on the key/value pair. Otherwise, it is the user's responsibility to free any
+ * allocated data. Returns 1 on success, 0 on failure.
+ *
+ * @param   table       HashTable
+ * @param   key         key in key/value pair
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+
+int removeHT(HashTable table, void *key);
+
+/* Rehash
+ *
+ * Increase the number of buckets and redistribute the keys accordingly.
+ *
+ * @param   table
+ *
+ * @return  void
+ */
+
+void rehash(HashTable table);
+
+/* toString
+ *
+ * Prints out the hashtable and it's contents.
+ *
+ * @param   table       HashTable to print
+ *
+ * @return  void
+ */
+ 
+void toStringHT(HashTable table);
 
 #endif
 /* END SWIFT_HASHTABLE_H_ */

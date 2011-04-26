@@ -51,6 +51,7 @@ struct HashTable_ {
     comp_func comp;
     destroy_key key_destroy_func;
     destroy_val val_destroy_func;
+    print_func print;
     Pair* buckets;
 };
 
@@ -67,6 +68,7 @@ static const unsigned int primes[] = {
     6151, 
     12289, 
     24593, 
+    
     49157, 
     98317,
     196613, 
@@ -77,6 +79,7 @@ static const unsigned int primes[] = {
     6291469, 
     12582917, 
     25165843,
+    
     50331653, 
     100663319, 
     201326611, 
@@ -85,7 +88,43 @@ static const unsigned int primes[] = {
     1610612741
 };
 
-HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val val)
+void toStringHT(HashTable table)
+{
+    int slot;
+    Pair curr;
+    
+    if(table == NULL)
+    {
+        fprintf(stderr, "Table cannot be NULL.\n");
+        return;
+    }
+    
+    if(table->print == NULL)
+    {
+        fprintf(stderr, "No print print function defined.\n");
+        return;
+    }
+    
+    printf("Total Slots: %d\n", table->numBuckets);
+    printf("Total Items: %d\n", table->numItems);
+    printf("Current LF: %f\n", (float) table->numItems / table->numBuckets);
+    
+    for(slot = 0; slot < table->numBuckets; slot++)
+    {
+        printf("[%d]: ", slot);
+        curr = table->buckets[slot];
+        
+        while(curr != NULL)
+        {
+            table->print(curr->key, curr->val);
+            curr = curr->next;
+        }
+        printf("NULL\n");
+    }
+    return;
+}
+
+HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val val, print_func print)
 {
     HashTable table;
     int i;
@@ -117,6 +156,7 @@ HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val 
     
     table->val_destroy_func = val;
     table->key_destroy_func = key;
+    table->print = print;
     table->comp = comp;
     table->hash = hash;
     table->numItems = 0;
@@ -170,6 +210,61 @@ void destroyHT(HashTable table)
     return;
 }
 
+/* Rehash
+ *
+ * Increase the number of buckets and redistribute the keys accordingly.
+ *
+ * @param   table
+ *
+ * @return  void
+ */
+
+void rehash(HashTable table)
+{
+    Pair* newbuckets;
+    Pair curr, next;
+    int i, slot, oldSlots;
+    
+    if(table->currPrime < 26)
+    {
+        oldSlots = table->numBuckets;
+        
+        table->currPrime++;
+        table->numBuckets = primes[table->currPrime];
+        
+        newbuckets = (Pair*) malloc( sizeof( Pair ) * table->numBuckets );
+        assert(newbuckets != NULL);
+        
+        for(i = 0; i < table->numBuckets; i++)
+        {
+            newbuckets[i] = NULL;
+        }
+        
+        for(i = 0; i < oldSlots; i++)
+        {
+            curr = table->buckets[i];
+            
+            while(curr != NULL)
+            {
+                next = curr->next;
+                
+                slot = (int) (curr->hash % table->numBuckets);
+                assert(slot >= 0 && slot < table->numBuckets);
+                
+                curr->next = newbuckets[slot];
+                newbuckets[slot] = curr;
+                
+                curr = next;
+            }
+        }
+        
+        free(table->buckets);
+        table->buckets = newbuckets;
+    }
+    
+    return;
+}
+
 int insertHT(HashTable table, void *key, void *val)
 {
     Pair kvpair;
@@ -179,6 +274,13 @@ int insertHT(HashTable table, void *key, void *val)
     if(table == NULL)
     {
         return 0;
+    }
+    
+    /* Check for rehash */
+    if(((float) table->numItems + 1) / table->numBuckets > LF)
+    {
+        printf("Rehashing...\n");
+        rehash(table);
     }
     
     /* Ok, lets make a key/value pair... */
@@ -191,11 +293,108 @@ int insertHT(HashTable table, void *key, void *val)
     
     /* Get the destination slot */
     slot = (int)(kvpair->hash % table->numBuckets);
-    assert( slot > 0 && slot < table->numBuckets);
+    assert( slot >= 0 && slot < table->numBuckets); 
     
     /* Now insert */
     kvpair->next = table->buckets[slot];
     table->buckets[slot] = kvpair;
+    table->numItems++;
     
     return 1;
+}
+
+void *searchHT(HashTable table, void *key)
+{
+    int slot;
+    Pair curr;
+    unsigned long hashVal;
+    
+    if(table == NULL)
+    {
+        fprintf(stderr, "Table cannot be NULL.\n");
+        return NULL;
+    }
+    
+    if(key == NULL)
+    {
+        fprintf(stderr, "Key cannot be NULL.\n");
+        return NULL;
+    }
+    
+    hashVal = table->hash(key);
+    slot = (int) hashVal % table->numBuckets;
+    curr = table->buckets[slot];
+        
+    while(curr != NULL)
+    {
+        if(table->comp(key, curr->key) == 0)
+        {
+            return curr->val;
+        }
+        curr = curr->next;
+    }
+    
+    return NULL;
+}
+
+int removeHT(HashTable table, void *key)
+{
+    int slot;
+    Pair curr, prev;
+    unsigned long hashVal;
+    
+    if(table == NULL)
+    {
+        fprintf(stderr, "Table cannot be NULL.\n");
+        return 0;
+    }
+    
+    if(key == NULL)
+    {
+        fprintf(stderr, "Key cannot be NULL.\n");
+        return 0;
+    }
+    
+    hashVal = table->hash(key);
+    slot = (int) hashVal % table->numBuckets;
+    
+    curr = table->buckets[slot];
+    prev = NULL;
+        
+    while(curr != NULL)
+    {
+        if(table->comp(key, curr->key) == 0)
+        {
+            /* If the key is the first Pair on the list */
+            if(prev == NULL)
+            {
+                table->buckets[slot] = curr->next;
+            }
+            else
+            {
+                prev->next = curr->next;
+            }
+            
+            /* Check if the destroy functions exist and call them if they do... */
+            if(table->key_destroy_func)
+            {
+                table->key_destroy_func(curr->key);
+            }
+            
+            if(table->val_destroy_func)
+            {
+                table->val_destroy_func(curr->val);
+            }
+            
+            /* Okay, any data we are responsible for is gone. Lets free the Pair struct */
+            free(curr);
+            
+            return 1;
+            
+        }
+        prev = curr;
+        curr = curr->next;
+    }
+    
+    return 0;
 }

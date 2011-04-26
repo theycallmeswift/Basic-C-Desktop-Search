@@ -6,10 +6,21 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <assert.h>
 #include "testing.h"
 #include "../src/hashtable.h"
+#include "../src/tokenizer.h"
+
+#define ALLOWED_CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890/"
 
 int tests_run, failures;
+
+struct Entry_ {
+    int frequency;
+    char *filename;
+};
+
+typedef struct Entry_* Entry;
 
 
 /* Misc.
@@ -29,16 +40,24 @@ unsigned long hash(void *obj)
 
 int compStrings(void* i, void* j) 
 {
-    if(strcmp((char *)i, (char*)j ) == 0)
-    {
-        return 0;
-    }
-    return 1;
+    return strcmp((char *)i, (char*)j);
 }
 
 void destroyString(void *str)
 {
     free( (char*)str );
+}
+
+void destroyEntry(void *ptr)
+{
+    Entry ent = (Entry)ptr;
+    free(ent->filename);
+    free(ent);
+}
+
+void printPair(void* key, void* val)
+{
+    printf("(%s, %s, %d)->", (char *)key, ((Entry)val)->filename, ((Entry)val)->frequency);
 }
 
 /* Tests */
@@ -48,20 +67,22 @@ void run_tests()
     HashTable table, self_destruct_table;
     unsigned long hashres;
     int i;
-    char* str;
+    char* str, *filename;
+    TokenizerT tok = NULL;
+    Entry ent;
     
     /* Test table Creation */
     
-    table = createHT(NULL, NULL, NULL, NULL);
+    table = createHT(NULL, NULL, NULL, NULL, NULL);
     SW_ASSERT(table == NULL, "Hashing function must be defined.", tests_run, failures);
     
-    table = createHT(hash, NULL, NULL, NULL);
+    table = createHT(hash, NULL, NULL, NULL, NULL);
     SW_ASSERT(table == NULL, "Comparison function must be defined.", tests_run, failures);
     
-    table = createHT(hash, compStrings, NULL, NULL);
+    table = createHT(hash, compStrings, NULL, NULL, NULL);
     SW_ASSERT(table != NULL, "All required inputs defined, No destroy functions.", tests_run, failures);
     
-    self_destruct_table = createHT(hash, compStrings, destroyString, NULL);
+    self_destruct_table = createHT(hash, compStrings, destroyString, destroyEntry, printPair);
     SW_ASSERT(self_destruct_table != NULL, "All valid inputs produces a new HashTable.", tests_run, failures);
     
     /* Test the Hash / Comp functions */
@@ -79,11 +100,49 @@ void run_tests()
     SW_ASSERT(i == 0, "Cannot insert into NULL table.", tests_run, failures);
     
     i = insertHT(table, (void *)"REALLLY REALLLY LONG, out of Contr0l $tr1nG th@t g3tz h(@)$hEd 4 Wh*t3v34 rezzzion....;';", (void *)1);
-    SW_ASSERT(i == 1, "Inserted into table", tests_run, failures);
+    SW_ASSERT(i == 1, "Insert normal data into table", tests_run, failures);
     
-    str = (char *)strdup("Test String");
-    i = insertHT(self_destruct_table, (void *)str, (void *)1);
-    SW_ASSERT(i == 1, "Self destructing table uses free functions properly to release allocated memory.", tests_run, failures);
+    tok = TKCreate(ALLOWED_CHARS, "/home/swift/Documents/Class/S2011/cs214/Project/bin/files/file1.txt");
+    
+    filename = "file1.txt";
+    
+    while((str = TKGetNextToken(tok)) != 0)
+    {
+        ent = (Entry) malloc( sizeof(struct Entry_) );
+        ent->filename = strdup(filename);
+        ent->frequency = 1;
+        
+        i = insertHT(self_destruct_table, (void *)str, (void *) ent);
+    }
+    
+    TKDestroy(tok);
+    tok = NULL;
+    
+    /* Testing Search Functions */
+    searchHT(NULL, NULL);
+    searchHT(table, NULL);
+    
+    ent = (Entry) searchHT(self_destruct_table, "varius");
+    SW_ASSERT(ent != NULL, "Found valid key.", tests_run, failures);    
+    
+    ent = (Entry) searchHT(self_destruct_table, "");
+    SW_ASSERT(ent == NULL, "Could not find invalid key.", tests_run, failures);   
+    
+    /* Testing removal functions */
+    removeHT(self_destruct_table, "tempor");
+    removeHT(self_destruct_table, "tempor");
+    removeHT(self_destruct_table, "tempor");
+    removeHT(self_destruct_table, "donec");
+    
+    
+    /* Testing Print Functions */
+    toStringHT(NULL);
+    toStringHT(table);
+    toStringHT(self_destruct_table);
+    
+    rehash(self_destruct_table);
+    
+    toStringHT(self_destruct_table);
     
     /* Destroy the tables */
     destroyHT(table);
