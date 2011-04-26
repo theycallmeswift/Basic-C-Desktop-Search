@@ -279,7 +279,6 @@ int insertHT(HashTable table, void *key, void *val)
     /* Check for rehash */
     if(((float) table->numItems + 1) / table->numBuckets > LF)
     {
-        printf("Rehashing...\n");
         rehash(table);
     }
     

@@ -3,11 +3,15 @@ CCFLAGS  = -ansi -pedantic -Wall -g
 
 # UNIT TESTS
 
-# Test 1 : Simple test to ensure that linking against the library succeeds
+# Test 1 : A variety of tests against the HashTable class
 TEST1        =    test_hashtable
 TEST1_SRC    =    tests/test_hashtable.c hashtable.o tokenizer.o
 
-TESTS        =    $(TEST1)
+# Test 2 : Professor Thu's base tests for the Sorted List
+TEST2        =    test_sortedlist
+TEST2_SRC    =    tests/test_sortedlist.c sorted-list.o
+
+TESTS        =    $(TEST1) $(TEST2)
 
 
 all: hashtable.o tokenizer.o
@@ -17,18 +21,25 @@ hashtable.o: src/hashtable.c src/hashtable.h
 	
 tokenizer.o: src/tokenizer.c src/tokenizer.h
 	$(CC) $(CCFLAGS) -o tokenizer.o -c src/tokenizer.c
+	
+sorted-list.o: src/sorted-list.c src/sorted-list.h
+	$(CC) $(CCFLAGS) -o sorted-list.o -c src/sorted-list.c
 
 
 # Unit test declarations
 $(TEST1): $(TEST1_SRC)
 	$(CC) -ansi -Wall -g -o $@ $(TEST1_SRC)
 	mv $(TEST1) bin/$(TEST1)
-	mkdir -p bin/files
-	cp tests/files/* bin/files
+
+$(TEST2): $(TEST2_SRC)
+	$(CC) -ansi -Wall -g -o $@ $(TEST2_SRC)
+	mv $(TEST2) bin/$(TEST2)
 
 # Make all test files and then delete the dependancies.
 tests: $(TESTS)
 	-rm -f *.o
+	mkdir -p bin/files
+	cp tests/files/* bin/files
 
 # Remove the .o files and clean the bin directory
 clean:
