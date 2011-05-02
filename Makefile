@@ -14,7 +14,17 @@ TEST2_SRC    =    tests/test_sortedlist.c sorted-list.o
 TESTS        =    $(TEST1) $(TEST2)
 
 
-all: hashtable.o tokenizer.o
+all: index
+
+index: hashtable.o tokenizer.o sorted-list.o index.o
+	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o index.o
+	mv index bin/index
+	-rm -f *.o
+	mkdir -p bin/files
+	cp tests/files/* bin/files
+	
+index.o: src/index.c src/index.h src/sorted-list.h src/hashtable.h src/tokenizer.h
+	$(CC) $(CCFLAGS) -o index.o -c src/index.c
 
 hashtable.o: src/hashtable.c src/hashtable.h
 	$(CC) $(CCFLAGS) -o hashtable.o -c src/hashtable.c

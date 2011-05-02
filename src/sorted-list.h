@@ -43,7 +43,7 @@ typedef int (*CompareFuncT)(void*, void*);
  * no longer needs.  
  */
 
-typedef void (*destroy_data)(void* key);
+typedef void (*DestroyDataFuncT)(void* key);
 
 
 /*
@@ -55,7 +55,7 @@ typedef void (*destroy_data)(void* key);
  * Else, it returns NULL.
  */
 
-SortedListT SLCreate(CompareFuncT cf);
+SortedListT SLCreate(CompareFuncT cf, DestroyDataFuncT destroy);
 
 /*
  * SLDestroy destroys a list, freeing all dynamically allocated memory.

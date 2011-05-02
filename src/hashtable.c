@@ -36,7 +36,7 @@ typedef struct Pair_* Pair;
  * @param   currPrime           Int that tracks where we are in the list of primes
  * @param   numBuckets          Total number of buckets
  * @param   hash                Pointer to hash function
- * @param   comp                Pointer to comparison function
+ * @param   comp                Pointer to comparison function (compares keys)
  * @param   key_destroy_func    Pointer to a function that destroys keys
  * @param   val_destroy_func    Pointer to a function that destroys values
  * @param   buckets             Array of Pairs
@@ -88,6 +88,16 @@ static const unsigned int primes[] = {
     1610612741
 };
 
+/* toString
+ *
+ * Prints out the hashtable and it's contents.
+ *
+ * @param   table       HashTable to print
+ *
+ * @return  void
+ */
+ 
+
 void toStringHT(HashTable table)
 {
     int slot;
@@ -123,6 +133,24 @@ void toStringHT(HashTable table)
     }
     return;
 }
+
+/* createHT
+ *
+ * Function to create a new HashTable. Asserts that size and LoadFactor are
+ * both greater than one and the hash and comp do not point to NULL.  The
+ * destroy_key and destroy_val functions are both optional, but if you do not
+ * provide them, it becomes the users responsibility to iterate over the table
+ * and free any alllocated space.
+ *
+ * @param   hash        function for hashing key/value pairs
+ * @param   comp        function for comparing key/value pairs
+ * @param   key         function for destroying the key of key/value pairs
+ * @param   val         function for destroying the value of key/value pairs
+ * @param   print       function for printing key/value pairs
+ *
+ * @return  success     newly created HashTable struct
+ * @return  failure     NULL
+ */ 
 
 HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val val, print_func print)
 {
@@ -171,6 +199,18 @@ HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val 
     
     return table; 
 }
+
+/* destroyHT
+ *
+ * Function that destroys a HashTable and frees all allocated memory. If the 
+ * passed in value is NULL, no action is performed. This function frees ALL 
+ * data in the remaining nodes if there are destroy_key or destroy_val functions
+ * defined.  Remember to set the variable pointers to NULL after they have been freed.
+ *
+ * @param   table       HashTable to be freed.
+ *
+ * @return  void
+ */
 
 void destroyHT(HashTable table)
 {
@@ -265,6 +305,22 @@ void rehash(HashTable table)
     return;
 }
 
+/* insertHT
+ *
+ * Function that inserts a key/value pair into the passed in HashTable.  Both the 
+ * key and the value should be cast to void * to make them generic.  All the hashing
+ * will be done by the hash function supplied by the user when the table was created.
+ * Returns a 1 on success, 0 on failure. This function does NOT check if the key already
+ * exists. 
+ *
+ * @param   table       HashTable to insert key/value Pair into
+ * @param   key         key to hash
+ * @param   val         value of key
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+
 int insertHT(HashTable table, void *key, void *val)
 {
     Pair kvpair;
@@ -302,6 +358,22 @@ int insertHT(HashTable table, void *key, void *val)
     return 1;
 }
 
+/* searchHT
+ *
+ * Searches the passed in HashTable for a key and returns a pointer to the value.
+ * If the key is not found or the search is unsuccessful, the function returns 
+ * NULL. This only returns the first found insterest for the designated key.
+ *
+ * NOTE: If a single key can have multiple values, it is your responsibility to
+ * compare the value being returned to the value you are searching for.
+ *
+ * @param   table       HashTable to search
+ * @param   key         key in a key/value pair
+ *
+ * @return  success     void * (pointer)
+ * @return  failure     NULL
+ */
+
 void *searchHT(HashTable table, void *key)
 {
     int slot;
@@ -321,7 +393,8 @@ void *searchHT(HashTable table, void *key)
     }
     
     hashVal = table->hash(key);
-    slot = (int) hashVal % table->numBuckets;
+    slot = (int) (hashVal % table->numBuckets);
+    
     curr = table->buckets[slot];
         
     while(curr != NULL)
@@ -335,6 +408,20 @@ void *searchHT(HashTable table, void *key)
     
     return NULL;
 }
+
+/* removeHT
+ *
+ * Searches the hashtable for the first occurence of a key and removes it. If
+ * key destroy or value destroy functions have been defined, they will be called
+ * on the key/value pair. Otherwise, it is the user's responsibility to free any
+ * allocated data. Returns 1 on success, 0 on failure.
+ *
+ * @param   table       HashTable
+ * @param   key         key in key/value pair
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
 
 int removeHT(HashTable table, void *key)
 {
@@ -355,7 +442,7 @@ int removeHT(HashTable table, void *key)
     }
     
     hashVal = table->hash(key);
-    slot = (int) hashVal % table->numBuckets;
+    slot = (int) (hashVal % table->numBuckets);
     
     curr = table->buckets[slot];
     prev = NULL;

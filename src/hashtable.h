@@ -19,7 +19,7 @@ typedef struct HashTable_* HashTable;
 /* Pointer to a Hashing Function */
 typedef unsigned long (*hash_func)( void *key );
 
-/* Pointer to a Comparison function. 
+/* Pointer to a Comparison function that compares keys
  *
  * @case    obj1 < obj2    -1
  * @case    obj1 = obj2     0
@@ -113,6 +113,9 @@ int insertHT(HashTable table, void *key, void *val);
  * Searches the passed in HashTable for a key and returns a pointer to the value.
  * If the key is not found or the search is unsuccessful, the function returns 
  * NULL. This only returns the first found insterest for the designated key.
+ *
+ * NOTE: If a single key can have multiple values, it is your responsibility to
+ * compare the value being returned to the value you are searching for.
  *
  * @param   table       HashTable to search
  * @param   key         key in a key/value pair

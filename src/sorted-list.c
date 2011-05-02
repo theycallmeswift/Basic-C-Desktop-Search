@@ -37,6 +37,7 @@ struct SLItemT_ {
 struct SortedListT_ {
     SLItemT head;
     CompareFuncT comp;
+    DestroyDataFuncT destroy;
     int version;
 };
 
@@ -60,11 +61,9 @@ struct SortedListIterT_ {
  *
  * If the function succeeds, it returns a (non-NULL) SortedListT object.
  * Else, it returns NULL.
- *
- * TODO: Insert code for destruction function
  */
 
-SortedListT SLCreate(CompareFuncT cf)
+SortedListT SLCreate(CompareFuncT cf, DestroyDataFuncT destroy)
 {
     SortedListT sl;
     
@@ -77,6 +76,7 @@ SortedListT SLCreate(CompareFuncT cf)
     }
         
     sl->comp = cf;
+    sl->destroy = destroy;
     sl->version = 0;
     sl->head = NULL;
     
@@ -87,8 +87,6 @@ SortedListT SLCreate(CompareFuncT cf)
  * SLDestroy destroys a list, freeing all dynamically allocated memory.
  * Ojects on the list should NOT be deallocated, however.  That is the
  * responsibility of the user of the list.
- *
- * TODO: Insert code for destruction function
  */
 void SLDestroy(SortedListT list)
 {
@@ -100,6 +98,12 @@ void SLDestroy(SortedListT list)
         while(curr != NULL)
         {
             next = curr->next;
+            
+            if(list->destroy)
+            {
+                list->destroy(curr->data);
+            }
+            
             free(curr);
             curr = next;
         }
@@ -224,8 +228,12 @@ int SLRemove(SortedListT list, void* data)
                 prev->next = curr->next;                    
             }
             
+            if(list->destroy)
+            {
+                list->destroy(curr->data);
+            }
+            
             free(curr);
-            /* TODO: Add in self destruct code */
             
             list->version++;
             return 1;

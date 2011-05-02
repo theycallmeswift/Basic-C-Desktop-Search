@@ -50,7 +50,7 @@ int main(int argc, char **argv)
   struct IntPairT_ numPairs[] = {{1,1},{2,2},{1,2},{3,4},{-1,1},{0,9},{2,2},{2,3}};
 
   /* Create list of integers */
-  SortedListT sl = SLCreate(compInt);
+  SortedListT sl = SLCreate(compInt, NULL);
 
   /* Insert test case */
   for (i = 0; i < 15; i++) {
@@ -89,7 +89,7 @@ int main(int argc, char **argv)
   SLDestroy(sl);
 
   /* Create list of integer pairs */
-  sl = SLCreate(compIntPair);
+  sl = SLCreate(compIntPair, NULL);
 
   /* Insert test case */
   for (i = 0; i < 8; i++) {
