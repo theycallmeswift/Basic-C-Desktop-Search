@@ -23,7 +23,7 @@
  *          2. Constants        *
  ********************************/
 
-#define DEBUG 1
+#define DEBUG 0
 #define STRING_CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 

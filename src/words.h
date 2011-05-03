@@ -103,6 +103,17 @@ int insertEntry(Word word, char *filename);
  */
 Entry createEntry(char *filename);
 
+/* sortEntries
+ *
+ * Sorts the entries in a word by frequency (desc).
+ *
+ * @param   word        the word whose entries should be sorted
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+int sortEntries(Word word);
+
 /* printWord
  *
  * Simple toString method for word objects

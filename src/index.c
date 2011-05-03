@@ -344,8 +344,13 @@ int indexWord(FILE *file, Word word)
     fputs(word->word, file);
     fputs("\n", file);
     
-    /* write each file */
+    /* Sort the Entries */
+    i = sortEntries(word);
+    assert(i != 0);
+    
     ent = word->head;
+    
+    /* write each file */
     
     while(ent != NULL)
     {

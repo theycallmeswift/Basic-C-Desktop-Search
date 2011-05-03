@@ -191,6 +191,87 @@ int insertEntry(Word word, char *filename)
     return 2;
 }
 
+/* sortEntries
+ *
+ * Sorts the entries in a word by frequency (desc).
+ *
+ * @param   word        the word whose entries should be sorted
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+int sortEntries(Word word)
+{
+    Entry curr, next, sorted, scurr, sprev;
+    int diff, inserted;
+    
+    if(word == NULL)
+    {
+        fprintf(stderr, "Error: Cannot sort entries of NULL word.\n");
+        return 0;
+    }
+    
+    curr = word->head;
+    sorted = NULL;
+    
+    while(curr != NULL)
+    {
+        next = curr->next;
+        
+        /* Set scurr to the front of the list, sprev to NULL, and inserted to 0 */
+        scurr = sorted;
+        sprev = NULL;
+        inserted = 0;
+        
+        while(scurr != NULL && inserted == 0)
+        {
+            diff = curr->frequency - scurr->frequency;
+            
+            if(diff >= 0)
+            {
+                /* The new one is bigger than the current node */
+                if(sprev == NULL)
+                {
+                    /* Insert it at the front of the list */
+                    curr->next = scurr;
+                    sorted = curr;
+                }
+                else
+                {
+                    sprev->next = curr;
+                    curr->next = scurr;
+                }
+                inserted = 1;
+            }
+            
+            sprev = scurr;
+            scurr = scurr->next;
+        }
+        
+        if(inserted == 0)
+        {
+            /* We reached the end of the list, put it there */
+            if(sprev == NULL)
+            {
+                /* Insert it at the front of the list */
+                curr->next = scurr;
+                sorted = curr;
+            }
+            else
+            {
+                sprev->next = curr;
+                curr->next = scurr;
+            }
+        }
+        
+        curr = next;
+    }
+    
+    word->head = sorted;
+    
+    return 1;
+}
+
 /* printWord
  *
  * Simple toString method for word objects
