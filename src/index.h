@@ -22,8 +22,7 @@
  *          2. Constants        *
  ********************************/
 
-#define DEBUG 1
-
+#define DEBUG 0
 #define STRING_CHARS "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
 
 /********************************
@@ -92,18 +91,41 @@ int insertEntry(Word word, char *filename);
 
 void printWord(void* ptr);
 
-
-/* This function produces the sorted list of entries.
+/* compWords
  *
- * Steps:
- * 1) Create a Tokenizer for the file and an empty hash map
- * 2) Read a word and create a new entry
- * 3) Insert it into the hashtable
- * 4) If the entry already exists, find it in the hashtable and increment
- * 5) Otherwise Insert it into the list as well
+ * Function that comparses two words. Arguments are type void*.
+ *
+ * @param       word1       first word
+ * @param       word2       second word
+ *
+ * @result      -1          word1 > word2
+ * @result      0           word1 = word2
+ * @result      1           word1 < word2
+ */
+ 
+int compWords(void* word1, void* word2);
+
+/****************************************
+ *          5. Helper Functions         *
+ ****************************************/
+ 
+
+/****************************************
+ *          6. Indexer Functions        *
+ ****************************************/
+ 
+/* tokenizeFile
+ *
+ * Takes in a filename and inserts word entries into the global
+ * wordTable object. Automatically increments frequency and adds
+ * new files to the global filelist.
+ *
+ * @param   filename        the file to index
+ *
+ * @return  0
  */
 
-int tokenizeFile( SortedListT list, char* filename );
+int tokenizeFile( char* filename );
 
 
 #endif /* SWIFT_INDEX_H_ */

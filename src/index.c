@@ -21,7 +21,10 @@
 /********************************
  *          2. Globals          *
  ********************************/
-SortedListT entrySL;
+SortedListT wordSL;
+HashTable wordTable;
+Entry file_list;
+
 
 /********************************
  *          3. Structs          *
@@ -95,6 +98,8 @@ Word createWord(char *word)
     /* Set the number of files and total appearances to 0 */
     newWord->numFiles = 0;
     newWord->totalAppearances = 0;
+    
+    newWord->head = NULL;
 
     return newWord;
 }
@@ -135,6 +140,38 @@ void destroyWord(void *wordptr)
     }
 }
 
+/* createEntry
+ *
+ * Creates a brand new entry object.
+ *
+ */
+Entry createEntry(char *filename)
+{
+    Entry ent;
+    
+    ent = (Entry) malloc( sizeof(struct Entry_) );
+    if(ent == NULL)
+    {
+        fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
+        return 0;
+    }
+    
+    ent->filename = (char*) malloc( sizeof(char) * (strlen(filename) + 1));
+    if(ent->filename == NULL)
+    {
+        free(ent);
+        fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
+        return 0;
+    }
+    if(DEBUG) printf("insertEntry: Setting filename = %s.\n", filename);
+    strcpy(ent->filename, filename);
+    
+    ent->frequency = 1;
+    
+    return ent;
+}
+
+
 /* insertEntry
  *
  * Inserts an entry into a word object. If the file is
@@ -171,6 +208,7 @@ int insertEntry(Word word, char *filename)
     /* Check if the filename is already in the list, if so increment and return */
     while(ent != NULL)
     {
+        if(DEBUG) printf("insertEntry: (%s) Comparing %s and %s.\n", word->word, filename, ent->filename);
         res = strcmp(filename, ent->filename);
         if( res == 0 )
         {
@@ -182,24 +220,11 @@ int insertEntry(Word word, char *filename)
     }
     
     /* Filename is not in the list, create a new entry and insert it at the head */
-    ent = (Entry) malloc( sizeof(struct Entry_) );
-    if(ent == NULL)
-    {
-        fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
-        return 0;
-    }
+    ent = createEntry(filename);
     
-    ent->filename = (char*) malloc( sizeof(char) * (strlen(filename) + 1));
-    if(ent->filename == NULL)
-    {
-        free(ent);
-        fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
-        return 0;
-    }
+    ent->next = word->head;
+    word->head = ent;
     
-    strcpy(ent->filename, filename);
-    
-    ent->frequency = 1;
     word->numFiles++;
     word->totalAppearances++;
     
@@ -231,17 +256,49 @@ void printWord(void* ptr)
         while(ent != NULL)
         {
             printf("[%s, %i]->", ent->filename, ent->frequency);
+            ent = ent->next;
         }
         
-        printf("NULL}), ");
+        printf("NULL})");
     }
+}
+
+/* compWords
+ *
+ * Function that comparses two words. Arguments are type void*.
+ *
+ * @param       word1       first word
+ * @param       word2       second word
+ *
+ * @result      -1          word1 > word2
+ * @result      0           word1 = word2
+ * @result      1           word1 < word2
+ */
+ 
+int compWords(void* word1, void* word2)
+{
+    Word w1, w2;
+    
+    w1 = (Word) word1;
+    w2 = (Word) word2;
+    
+    return strcmp(w1->word, w2->word);
 }
 
 /********************************
  *      5. Helper Functions     *
  ********************************/
  
-/* Walk through a directory and index its files */
+/* plist
+ *
+ * Walk through a directory and tokenize each of its files.
+ *
+ * @param   name        name of file or directory
+ * @param   status      unused param
+ * @param   type        type of object (file, dir, ect)
+ *
+ * @return  0
+ */
 
 int plist(const char *name, const struct stat *status, int type) {
 
@@ -253,7 +310,7 @@ int plist(const char *name, const struct stat *status, int type) {
     if(type == FTW_F)
     {
         if(DEBUG) printf("plist: Attempting to tokenize %s.\n", (char *) name);
-        tokenizeFile( entrySL, (char *) name );
+        tokenizeFile( (char *) name );
     }
 
     return 0;
@@ -268,6 +325,25 @@ unsigned long hash(void *obj)
 	h=0;
 	while(*key) h=33*h + *key++;
 	return h;
+}
+
+/* printWordHT
+ *
+ * Wrapper for printing words with the HT print function.
+ *
+ * @param   key     Not used
+ * @param   val     the word to print.
+ *
+ * @return  void
+ */
+
+void printWordHT(void *key, void* val)
+{
+    if(val != NULL)
+    {
+        printWord((Word) val);
+        printf("->");
+    }
 }
 
 /* compStrings
@@ -290,28 +366,38 @@ int compStrings(void *str1, void *str2)
 
 void destroyString(void *str)
 {
-    free( (char*)str );
+    if(str != NULL) free( (char*)str );
 }
 
 
 /********************************
- *      Primary Functions       *
+ *      6. Indexer Functions    *
  ********************************/
+ 
+/* tokenizeFile
+ *
+ * Takes in a filename and inserts word entries into the global
+ * wordTable object. Automatically increments frequency and adds
+ * new files to the global filelist.
+ *
+ * @param   filename        the file to index
+ *
+ * @return  0
+ */
 
-int tokenizeFile( SortedListT list, char* filename )
+int tokenizeFile( char* filename )
 {
     TokenizerT tok;
-    HashTable table;
     Word word;
     char *str;
     int res;
+    Entry file;
     
-    /* Create a HashTable to hold our entries. */
-    table = createHT(hash, compStrings, destroyString, destroyWord, printWord);
-    assert(table != NULL);
-    
-    if(DEBUG) printf("tokenizeFile: Created HashTable.\n");
-    
+    /* Insert filename into the file_list */
+    file = createEntry(filename);
+    file->next = file_list;
+    file_list = file;
+        
     /* Create a Tokenizer for the file */
     tok = TKCreate(STRING_CHARS, filename);
     assert(tok != NULL);
@@ -323,20 +409,39 @@ int tokenizeFile( SortedListT list, char* filename )
     {        
         /* Search the hash table for the key/file combo */
         if(DEBUG) { printf("Searching for %s\n", str); }
+        word = (Word) searchHT(wordTable, (void*)str);
         
+        if(word == NULL)
+        {
+            if(DEBUG) printf("tokenizeFile: Couldn't find %s in HT.\n", str);
+            
+            /* Create the word */
+            word = createWord(str);
+            assert(word != NULL);
+            
+            /* Append the file entry */
+            res = insertEntry(word, filename);
+            assert(res != 0);
+            
+            /* Insert it into the HT */
+            res = insertHT(wordTable, (void*) str, (void*) word);
+            assert(res != 0);
+        }
+        else
+        {
+            if(DEBUG) printf("tokenizeFile: Found %s in HT.\n", str);
+            
+            res = insertEntry(word, filename);
+            assert(res != 0);
+
+            if(str != NULL) free(str);
+        }
     }
     
     TKDestroy(tok);
     tok = NULL;
     
-    toStringHT(table);
-    
     if(DEBUG) printf("tokenizeFile: Destroyed Tokenizer.\n");
-    
-    destroyHT(table);
-    table = NULL;
-    
-    if(DEBUG) printf("tokenizeFile: Destroyed HashTable.\n");
     
     return 0;
 }
@@ -344,6 +449,9 @@ int tokenizeFile( SortedListT list, char* filename )
 
 int main( int argc, char** argv )
 {    
+    int i;
+    Entry ent;
+    
     /* Validate the inputs */
     if( (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'h') || argc < 3 )
     {
@@ -351,16 +459,48 @@ int main( int argc, char** argv )
         return 1;
     }
     
-    /* entrySL = SLCreate(compEntries, destroyEntry);
-    assert(entrySL != NULL); */
+    /* Create a new Sorted List */
+    wordSL = SLCreate(compWords, destroyWord);
+    assert(wordSL != NULL);
     
     if(DEBUG) printf("main: Created Sorted List for Entries.\n");
     
+    /* Create a HashTable to hold our entries. */
+    wordTable = createHT(hash, compStrings, destroyString, destroyWord, printWordHT);
+    assert(wordTable != NULL);
+    
+    if(DEBUG) printf("main: Created HashTable.\n");
+    
+    /* Set file_list = NULL because the list starts out empty */
+    file_list = NULL;
+    
+    /* Recursivly walk through each file in a directory and tokenize */    
     ftw(argv[2], plist, 1);
     
-    /*
-    SLDestroy(entrySL);
-    entrySL = NULL; */
+    /* Print out the HT */
+    toStringHT(wordTable);
+    
+    /* Print out the file list */
+    printf("Files:\n");
+    ent = file_list;
+    i = 0;
+    
+    while(ent != NULL)
+    {
+        printf("[%i]: %s\n", i, ent->filename);
+        i++;
+        ent = ent->next;
+    }
+    
+    /* We're done with our HT, destroy it */
+    destroyHT(wordTable);
+    wordTable = NULL;
+    
+    if(DEBUG) printf("main: Destroyed HashTable.\n");
+    
+    /* We're done with our Sorted List, destroy it */
+    SLDestroy(wordSL);
+    wordSL = NULL; 
     
     if(DEBUG) printf("main: Entry list successfully destroyed.\n");
     
