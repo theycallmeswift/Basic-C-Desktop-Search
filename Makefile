@@ -16,14 +16,14 @@ TESTS        =    $(TEST1) $(TEST2)
 
 all: index
 
-index: hashtable.o tokenizer.o sorted-list.o index.o
-	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o index.o
+index: hashtable.o tokenizer.o sorted-list.o words.o index.o
+	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o words.o index.o
 	mv index bin/index
 	-rm -f *.o
 	mkdir -p bin/files
 	cp tests/files/* bin/files
 	
-index.o: src/index.c src/index.h src/sorted-list.h src/hashtable.h src/tokenizer.h
+index.o: src/index.c src/index.h src/sorted-list.h src/hashtable.h src/tokenizer.h src/words.h
 	$(CC) $(CCFLAGS) -o index.o -c src/index.c
 
 hashtable.o: src/hashtable.c src/hashtable.h
@@ -34,7 +34,9 @@ tokenizer.o: src/tokenizer.c src/tokenizer.h
 	
 sorted-list.o: src/sorted-list.c src/sorted-list.h
 	$(CC) $(CCFLAGS) -o sorted-list.o -c src/sorted-list.c
-
+	
+words.o: src/words.c src/words.h
+	$(CC) $(CCFLAGS) -o words.o -c src/words.c
 
 # Unit test declarations
 $(TEST1): $(TEST1_SRC)

@@ -162,7 +162,7 @@ int SLInsert(SortedListT list, void* data)
         curr = list->head;
         prev = NULL;
         
-        while(curr != NULL && list->comp(data, curr->data) != -1)
+        while(curr != NULL && list->comp(data, curr->data) > -1)
         {
             prev = curr;
             curr = curr->next;
