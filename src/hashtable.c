@@ -35,6 +35,7 @@ typedef struct Pair_* Pair;
  * @param   numItems            Total items in table
  * @param   currPrime           Int that tracks where we are in the list of primes
  * @param   numBuckets          Total number of buckets
+ * @param   version
  * @param   hash                Pointer to hash function
  * @param   comp                Pointer to comparison function (compares keys)
  * @param   key_destroy_func    Pointer to a function that destroys keys
@@ -47,12 +48,28 @@ struct HashTable_ {
     int numItems;
     int currPrime;
     int numBuckets;
+    int version;
     hash_func hash;
     comp_func comp;
     destroy_key key_destroy_func;
     destroy_val val_destroy_func;
     print_func print;
     Pair* buckets;
+};
+
+/* HTIterator
+ *
+ * @param   table       HashTable to iterate over
+ * @param   curr        pointer to current object
+ * @param   row         current row
+ * @param   version     current version
+ */
+
+struct HTIterator_ {
+    HashTable table;
+    Pair curr;
+    int row;
+    int version;
 };
 
 /* Array of primes for table size. 26 total values */
@@ -188,6 +205,7 @@ HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val 
     table->comp = comp;
     table->hash = hash;
     table->numItems = 0;
+    table->version = 0;
     table->maxLoadFactor = LF;
     
     /* By default, set all the buckets to NULL so we know that they're empty down the road. */
@@ -229,11 +247,13 @@ void destroyHT(HashTable table)
                 if(table->key_destroy_func)
                 {
                     table->key_destroy_func(curr->key);
+                    curr->key = NULL;
                 }
                 
                 if(table->val_destroy_func)
                 {
                     table->val_destroy_func(curr->val);
+                    curr->val = NULL;
                 }
                 
                 /* Okay, any data we are responsible for is gone. Lets free the Pair struct */
@@ -302,6 +322,8 @@ void rehash(HashTable table)
         table->buckets = newbuckets;
     }
     
+    table->version++;
+    
     return;
 }
 
@@ -354,6 +376,8 @@ int insertHT(HashTable table, void *key, void *val)
     kvpair->next = table->buckets[slot];
     table->buckets[slot] = kvpair;
     table->numItems++;
+    
+    table->version++;
     
     return 1;
 }
@@ -475,11 +499,122 @@ int removeHT(HashTable table, void *key)
             /* Okay, any data we are responsible for is gone. Lets free the Pair struct */
             free(curr);
             
+            table->version++;
+            
             return 1;
             
         }
         prev = curr;
         curr = curr->next;
+    }
+    
+    return 0;
+}
+
+/* createIterHT
+ *
+ * Creates a new hashtable iterator for the current version
+ * of the table.  If the table changes (rehash, insert, 
+ * remove), the Iterator will become invalid and you will
+ * need to destroy it and create a new one.
+ *
+ * @param       table       hashtable to make iterator for
+ *
+ * @result      success     new HTIterator
+ * @result      failure     NULL
+ */
+ 
+HTIterator createIterHT(HashTable table)
+{
+    HTIterator iter;
+    
+    if(table == NULL)
+    {
+        fprintf(stderr, "Error: Cannot create iterator for NULL table.\n");
+        return NULL;
+    }
+    
+    iter = (HTIterator) malloc( sizeof(struct HTIterator_) );
+    if(iter == NULL)
+    {
+        fprintf(stderr, "Error: Could not allocate memory for iterator.\n");
+        return NULL;
+    }
+    
+    iter->table = table;
+    iter->curr = NULL;
+    iter->version = table->version;
+    iter->row = -1;
+    
+    return iter;
+}
+
+/* destroyIterHT
+ *
+ * Destroys an existing HTIterator object. If NULL is passed in,
+ * nothing will happen.
+ *
+ * @param       iter        hashtable iterator to destroy
+ *
+ * @return      void
+ */
+ 
+void destroyIterHT(HTIterator iter)
+{
+    if(iter != NULL)
+    {
+        free(iter);
+    }
+    return;
+}
+
+/* HTNextItem
+ *
+ * Gets the next item in the hashtable from an HTIterator. 
+ * This function inserts the key and value into addresses
+ * you provide.
+ *
+ * @param       iter            HTIterator object
+ * @param       key             pointer to key
+ * @param       val             pointer to val
+ *
+ * @return      success         1
+ * @return      end of list     0
+ * @return      error           -1
+ */
+
+int HTNextItem(HTIterator iter, void** key, void** val)
+{
+    if(iter == NULL)
+    {
+        fprintf(stderr, "Error: Cannot iterate over NULL iterator.\n");
+        return -1;
+    }
+    
+    if(iter->version != iter->table->version)
+    {
+        fprintf(stderr, "Error: Iterator version and table version do not match.\n");
+        return -1;
+    }
+    
+    while(iter->row != (iter->table->numBuckets - 1))
+    {
+        if(iter->curr == NULL)
+        {
+            iter->row++;
+            iter->curr = iter->table->buckets[iter->row];
+        }
+        else
+        {
+            iter->curr = iter->curr->next;
+        }
+        
+        if(iter->curr != NULL)
+        {
+            *key = iter->curr->key;
+            *val = iter->curr->val;
+            return 1;
+        }
     }
     
     return 0;

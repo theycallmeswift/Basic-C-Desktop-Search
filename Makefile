@@ -53,4 +53,4 @@ tests: $(TESTS)
 
 # Remove the .o files and clean the bin directory
 clean:
-	-rm -rf *.o bin/*
+	-rm -rf *.o bin/index bin/files

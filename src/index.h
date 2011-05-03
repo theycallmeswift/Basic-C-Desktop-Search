@@ -104,14 +104,10 @@ void printWord(void* ptr);
  */
  
 int compWords(void* word1, void* word2);
-
-/****************************************
- *          5. Helper Functions         *
- ****************************************/
  
 
 /****************************************
- *          6. Indexer Functions        *
+ *          5. Indexer Functions        *
  ****************************************/
  
 /* tokenizeFile
@@ -126,6 +122,61 @@ int compWords(void* word1, void* word2);
  */
 
 int tokenizeFile( char* filename );
+
+/* HTtoSL
+ *
+ * Function that converts a HashTable to a Sorted List.
+ * Returns a new list on success and NULL on failure.
+ *
+ * @param   table       hashtable
+ *
+ * @return  success     SortedListT
+ * @return  failure     NULL
+ */
+
+SortedListT HTtoSL(HashTable table);
+
+/* indexFiles
+ *
+ * Writes the file list to an inverted index in the following 
+ * format:
+ *
+ * <files>
+ *      file#: filename
+ *      file#: filename
+ *      ... etc ...
+ * </files>
+ *
+ * Returns a 1 on success, 0 on failure.
+ *
+ * @param   file        pointer to the file
+ * @param   list        list of file entries
+ *
+ * @result  success     1
+ * @result  failure     0
+ */
+int indexFiles(FILE* file, Entry list);
+
+/* indexWord
+ *
+ * Writes a Word to an inverted index in the following format:
+ *
+ * <list> Word
+ *      file#: frequency
+ *      file#: frequency
+ *      ... etc ...
+ * </list>
+ *
+ * Returns a 1 on success, 0 on failure.
+ *
+ * @param   file        pointer to the file
+ * @param   word        Word object to write
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+
+int indexWord(FILE *file, Word word);
 
 
 #endif /* SWIFT_INDEX_H_ */

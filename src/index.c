@@ -21,7 +21,6 @@
 /********************************
  *          2. Globals          *
  ********************************/
-SortedListT wordSL;
 HashTable wordTable;
 Entry file_list;
 
@@ -144,6 +143,10 @@ void destroyWord(void *wordptr)
  *
  * Creates a brand new entry object.
  *
+ * @param   filename        the filename where the entry occured
+ *
+ * @return  success         new Entry
+ * @return  failure         NULL
  */
 Entry createEntry(char *filename)
 {
@@ -153,7 +156,7 @@ Entry createEntry(char *filename)
     if(ent == NULL)
     {
         fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
-        return 0;
+        return NULL;
     }
     
     ent->filename = (char*) malloc( sizeof(char) * (strlen(filename) + 1));
@@ -161,7 +164,7 @@ Entry createEntry(char *filename)
     {
         free(ent);
         fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
-        return 0;
+        return NULL;
     }
     if(DEBUG) printf("insertEntry: Setting filename = %s.\n", filename);
     strcpy(ent->filename, filename);
@@ -316,6 +319,15 @@ int plist(const char *name, const struct stat *status, int type) {
     return 0;
 }
 
+/* hash
+ *
+ * Simple hashing function for strings.
+ *
+ * @param   obj         void* object to hash (string)
+ *
+ * @return  unsigned long hash
+ */
+
 unsigned long hash(void *obj)
 {
 	char *key;
@@ -363,6 +375,16 @@ int compStrings(void *str1, void *str2)
 {
     return strcmp((char*)str1, (char*)str2);
 }
+
+/* destroyString
+ *
+ * Void * wrapper for freeing strings. To be used with
+ * the HashTables's internal destroy function.
+ *
+ * @param   str         string to free
+ *
+ * @return  void
+ */
 
 void destroyString(void *str)
 {
@@ -446,11 +468,194 @@ int tokenizeFile( char* filename )
     return 0;
 }
 
+/* HTtoSL
+ *
+ * Function that converts a HashTable to a Sorted List.
+ * Returns a new list on success and NULL on failure.
+ *
+ * @param   table       hashtable
+ *
+ * @return  success     SortedListT
+ * @return  failure     NULL
+ */
+
+SortedListT HTtoSL(HashTable table)
+{
+    HTIterator iter;
+    int res;
+    void *key, *val;
+    char* str;
+    Word word;
+    SortedListT list;
+    
+    /* Create a new Sorted List */
+    list = SLCreate(compWords, destroyWord);
+    if(list == NULL)
+    {
+        fprintf(stderr, "Error: Could not allocate enough memory for list.\n");
+        return NULL;
+    }
+    
+    iter = createIterHT(table);
+    
+    while((res = HTNextItem(iter, &key, &val) == 1))
+    {
+        str = (char*)key;
+        word = (Word)val;
+        
+        SLInsert(list, (void*)word);
+    }
+        
+    destroyIterHT(iter);
+    iter = NULL;
+    
+    return list;
+}
+
+/* indexFiles
+ *
+ * Writes the file list to an inverted index in the following 
+ * format:
+ *
+ * <files>
+ *      file#: filename
+ *      file#: filename
+ *      ... etc ...
+ * </files>
+ *
+ * Returns a 1 on success, 0 on failure.
+ *
+ * @param   file        pointer to the file
+ * @param   list        list of file entries
+ *
+ * @result  success     1
+ * @result  failure     0
+ */
+int indexFiles(FILE* file, Entry list)
+{    
+    int i;
+    char buffer[1024];
+    
+    if(file == NULL)
+    {
+        fprintf(stderr, "Error: Index file cannot be NULL.\n");
+        return 0;
+    }
+    
+    fputs("<files>\n", file);
+    
+    i = 0;
+    
+    while(list != NULL)
+    {
+        fputs("\t", file);
+        
+        /* Convert the file number to a string */
+        sprintf(buffer, "%i", i);
+        
+        fputs(buffer, file);
+        fputs(": ", file);
+        fputs(list->filename, file);
+        fputs("\n", file);
+        
+        list = list->next;
+        i++;
+    }
+    
+    fputs("</files>\n", file);
+    return 1;    
+}
+
+/* indexWord
+ *
+ * Writes a Word to an inverted index in the following format:
+ *
+ * <list> Word
+ *      file#: frequency
+ *      file#: frequency
+ *      ... etc ...
+ * </list>
+ *
+ * Returns a 1 on success, 0 on failure.
+ *
+ * @param   file        pointer to the file
+ * @param   word        Word object to write
+ *
+ * @return  success     1
+ * @return  failure     0
+ */
+
+int indexWord(FILE *file, Word word)
+{
+    Entry ent, currfile;
+    char buffer[255];
+    int i;
+    
+    if(file == NULL)
+    {
+        fprintf(stderr, "Error: Index file cannot be NULL.\n");
+        return 0;
+    }
+    
+    if(word == NULL)
+    {
+        fprintf(stderr, "Error: Word cannot be NULL.\n");
+        return 0;
+    }
+    
+    /* Write the <list> header */
+    fputs("<list> ", file);
+    fputs(word->word, file);
+    fputs("\n", file);
+    
+    /* write each file */
+    ent = word->head;
+    
+    while(ent != NULL)
+    {
+        fputs("\t", file);
+        
+        /* Convert filename to int */
+        i = 0;
+        currfile = file_list;
+        
+        while(currfile != NULL && strcmp(currfile->filename, ent->filename) != 0)
+        {
+            i++;
+            currfile = currfile->next;
+        }
+        
+        /* Validate that the file was found */
+        assert(currfile != NULL);
+        
+        sprintf(buffer, "%i: ", i);
+        
+        fputs(buffer, file);
+        
+        /* Convert the frequency to a string */
+        sprintf(buffer, "%i", ent->frequency);
+        
+        fputs(buffer, file);
+        fputs("\n", file);
+        
+        ent = ent->next;
+    }
+    
+    /* close the </list> */
+    fputs("</list>\n", file);
+    return 1;
+}
+
 
 int main( int argc, char** argv )
 {    
-    int i;
-    Entry ent;
+    int i, res;
+    Entry ent, next;
+    void* ptr;
+    Word word;
+    SortedListT wordList;
+    SortedListIterT iter;
+    FILE *index;
     
     /* Validate the inputs */
     if( (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'h') || argc < 3 )
@@ -459,14 +664,12 @@ int main( int argc, char** argv )
         return 1;
     }
     
-    /* Create a new Sorted List */
-    wordSL = SLCreate(compWords, destroyWord);
-    assert(wordSL != NULL);
+    /* By default, set wordList = NULL */
+    wordList = NULL;
     
-    if(DEBUG) printf("main: Created Sorted List for Entries.\n");
-    
-    /* Create a HashTable to hold our entries. */
-    wordTable = createHT(hash, compStrings, destroyString, destroyWord, printWordHT);
+    /* Create a HashTable to hold our entries. We are setting the destroy value
+    method = NULL because we will use it once the sortedList is destroyed */
+    wordTable = createHT(hash, compStrings, destroyString, NULL, printWordHT);
     assert(wordTable != NULL);
     
     if(DEBUG) printf("main: Created HashTable.\n");
@@ -478,31 +681,74 @@ int main( int argc, char** argv )
     ftw(argv[2], plist, 1);
     
     /* Print out the HT */
-    toStringHT(wordTable);
+    if(DEBUG) toStringHT(wordTable);
     
-    /* Print out the file list */
-    printf("Files:\n");
-    ent = file_list;
+    if(DEBUG)
+    {
+        /* Print out the file list */
+        printf("Files:\n");
+        ent = file_list;
+        i = 0;
+        
+        while(ent != NULL)
+        {
+            printf("[%i]: %s\n", i, ent->filename);
+            i++;
+            ent = ent->next;
+        }
+    }
+    
+    /* Convert our HT to a Sorted List */
+    wordList = HTtoSL(wordTable);
+    assert(wordList != NULL);
+    
+    /* Create the new index file */
+    index = fopen(argv[1], "w");
+    assert(index != NULL);
+    
+    res = indexFiles(index, file_list);
+    assert(res != 0);
+    
+    /* Get ready to iterate over the table */
+    iter = SLCreateIterator(wordList);
     i = 0;
     
-    while(ent != NULL)
+    while((SLNextItem(iter, &ptr) == 1))
     {
-        printf("[%i]: %s\n", i, ent->filename);
+        word = (Word) ptr;
+        
+        res = indexWord(index, word);
+        assert(res != 0);
+        
         i++;
-        ent = ent->next;
     }
+    
+    /* Close the file */
+    fclose(index);
+    index = NULL;
+    
+    /* Now we're done with the iterator, goodbye. */
+    SLDestroyIterator(iter);
+    iter = NULL;
     
     /* We're done with our HT, destroy it */
     destroyHT(wordTable);
     wordTable = NULL;
-    
-    if(DEBUG) printf("main: Destroyed HashTable.\n");
-    
+
     /* We're done with our Sorted List, destroy it */
-    SLDestroy(wordSL);
-    wordSL = NULL; 
+    SLDestroy(wordList);
+    wordList = NULL; 
     
-    if(DEBUG) printf("main: Entry list successfully destroyed.\n");
+    /* We're done with our filelist as well, destroy that too */
+    ent = file_list;
+    
+    while(ent != NULL)
+    {
+        next = ent->next;
+        free(ent->filename);
+        free(ent);
+        ent = next;
+    }
     
     return 1;
 }

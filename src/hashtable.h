@@ -16,6 +16,10 @@
 struct HashTable_;
 typedef struct HashTable_* HashTable;
 
+/* Define our HTIterator Object */
+struct HTIterator_;
+typedef struct HTIterator_* HTIterator;
+
 /* Pointer to a Hashing Function */
 typedef unsigned long (*hash_func)( void *key );
 
@@ -163,6 +167,50 @@ void rehash(HashTable table);
  */
  
 void toStringHT(HashTable table);
+
+/* createIterHT
+ *
+ * Creates a new hashtable iterator for the current version
+ * of the table.  If the table changes (rehash, insert, 
+ * remove), the Iterator will become invalid and you will
+ * need to destroy it and create a new one.
+ *
+ * @param       table       hashtable to make iterator for
+ *
+ * @result      success     new HTIterator
+ * @result      failure     NULL
+ */
+ 
+HTIterator createIterHT(HashTable table);
+
+/* destroyIterHT
+ *
+ * Destroys an existing HTIterator object. If NULL is passed in,
+ * nothing will happen.
+ *
+ * @param       iter        hashtable iterator to destroy
+ *
+ * @return      void
+ */
+ 
+void destroyIterHT(HTIterator iter);
+
+/* HTNextItem
+ *
+ * Gets the next item in the hashtable from an HTIterator. 
+ * This function inserts the key and value into addresses
+ * you provide.
+ *
+ * @param       iter            HTIterator object
+ * @param       key             pointer to key
+ * @param       val             pointer to val
+ *
+ * @return      success         1
+ * @return      end of list     0
+ * @return      error           -1
+ */
+
+int HTNextItem(HTIterator iter, void** key, void** val);
 
 #endif
 /* END SWIFT_HASHTABLE_H_ */
