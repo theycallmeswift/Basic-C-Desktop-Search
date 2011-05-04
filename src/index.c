@@ -254,8 +254,8 @@ SortedListT HTtoSL(HashTable table)
  * format:
  *
  * <files>
- *      file#: filename
- *      file#: filename
+ *      file#:filename
+ *      file#:filename
  *      ... etc ...
  * </files>
  *
@@ -290,7 +290,7 @@ int indexFiles(FILE* file, Entry list)
         sprintf(buffer, "%i", i);
         
         fputs(buffer, file);
-        fputs(": ", file);
+        fputs(":", file);
         fputs(list->filename, file);
         fputs("\n", file);
         

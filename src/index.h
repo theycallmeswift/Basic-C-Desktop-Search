@@ -63,8 +63,8 @@ SortedListT HTtoSL(HashTable table);
  * format:
  *
  * <files>
- *      file#: filename
- *      file#: filename
+ *      file#:filename
+ *      file#:filename
  *      ... etc ...
  * </files>
  *

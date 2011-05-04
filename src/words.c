@@ -128,6 +128,7 @@ Entry createEntry(char *filename)
     strcpy(ent->filename, filename);
     
     ent->frequency = 1;
+    ent->next = NULL;
     
     return ent;
 }

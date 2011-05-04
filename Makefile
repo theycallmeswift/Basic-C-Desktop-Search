@@ -14,14 +14,20 @@ TEST2_SRC    =    tests/test_sortedlist.c sorted-list.o
 TESTS        =    $(TEST1) $(TEST2)
 
 
-all: index
+all: index search cleanobjs
 
 index: hashtable.o tokenizer.o sorted-list.o words.o index.o
 	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o words.o index.o
 	mv index bin/index
-	-rm -f *.o
 	mkdir -p bin/files
 	cp tests/files/* bin/files
+
+search: hashtable.o tokenizer.o sorted-list.o words.o search.o
+	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o
+	mv search bin/search
+
+search.o: src/search.c src/search.h src/sorted-list.h src/hashtable.h src/tokenizer.h src/words.h
+	$(CC) $(CCFLAGS) -o search.o -c src/search.c
 	
 index.o: src/index.c src/index.h src/sorted-list.h src/hashtable.h src/tokenizer.h src/words.h
 	$(CC) $(CCFLAGS) -o index.o -c src/index.c
@@ -47,12 +53,16 @@ $(TEST2): $(TEST2_SRC)
 	$(CC) -ansi -Wall -g -o $@ $(TEST2_SRC)
 	mv $(TEST2) bin/$(TEST2)
 
-# Make all test files and then delete the dependancies.
+# Make all test files and then delete the dependancies. 
 tests: $(TESTS)
 	-rm -f *.o
 	mkdir -p bin/files
 	cp tests/files/* bin/files
 
 # Remove the .o files and clean the bin directory
+cleanobjs:
+	-rm -f *.o
+
 clean:
-	-rm -rf *.o bin/index bin/files
+	-rm -rf *.o 
+	-rm -rf bin/index bin/files bin/search
