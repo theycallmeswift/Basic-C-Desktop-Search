@@ -16,14 +16,14 @@ TESTS        =    $(TEST1) $(TEST2)
 
 all: index search cleanobjs
 
-index: hashtable.o tokenizer.o sorted-list.o words.o index.o
-	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o words.o index.o
+index: hashtable.o tokenizer.o sorted-list.o words.o index.o src/indexdriver.c
+	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o words.o index.o src/indexdriver.c
 	mv index bin/index
 	mkdir -p bin/files
 	cp tests/files/* bin/files
 
-search: hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o
-	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o
+search: hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o src/searchdriver.c
+	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o src/searchdriver.c
 	mv search bin/search
 
 cache.o: src/cache.c src/cache.h src/hashtable.h src/words.h

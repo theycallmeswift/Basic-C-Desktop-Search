@@ -10,12 +10,6 @@
 /********************************
  *          1. Includes         *
  ********************************/
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <assert.h>
-#include <ftw.h>
 #include "index.h"
 
 /********************************
@@ -54,78 +48,6 @@ int plist(const char *name, const struct stat *status, int type) {
     }
 
     return 0;
-}
-
-/* hash
- *
- * Simple hashing function for strings.
- *
- * @param   obj         void* object to hash (string)
- *
- * @return  unsigned long hash
- */
-
-unsigned long hash(void *obj)
-{
-	char *key;
-	int h;
-	
-	key = (char *) obj;
-	h=0;
-	while(*key) h=33*h + *key++;
-	return h;
-}
-
-/* printWordHT
- *
- * Wrapper for printing words with the HT print function.
- *
- * @param   key     Not used
- * @param   val     the word to print.
- *
- * @return  void
- */
-
-void printWordHT(void *key, void* val)
-{
-    if(val != NULL)
-    {
-        printWord((Word) val);
-        printf("->");
-    }
-}
-
-/* compStrings
- *
- * Void* wrapper for strcmp. To be used with 
- * the HashTable's internal comparison function.
- *
- * @param   str1        1st string
- * @param   str2        2nd string
- *
- * @return  -1          str1 < str2
- * @return  0           str1 = str2
- * @return  1           str1 > str2
- */
-
-int compStrings(void *str1, void *str2)
-{
-    return strcmp((char*)str1, (char*)str2);
-}
-
-/* destroyString
- *
- * Void * wrapper for freeing strings. To be used with
- * the HashTables's internal destroy function.
- *
- * @param   str         string to free
- *
- * @return  void
- */
-
-void destroyString(void *str)
-{
-    if(str != NULL) free( (char*)str );
 }
 
 
@@ -396,7 +318,7 @@ int indexWord(FILE *file, Word word)
 }
 
 
-int main( int argc, char** argv )
+int runindex( int argc, char** argv )
 {    
     int i, res;
     Entry ent, next;

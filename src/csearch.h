@@ -10,6 +10,14 @@
 #ifndef SWIFT_CSEARCH_H_
 #define SWIFT_CSEARCH_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <math.h>
+#include "cache.h"
+#include "tokenizer.h"
+#include "words.h"
+
 /********************************
  * 1. Constants                 *
  ********************************/
@@ -138,7 +146,8 @@ Word getWord(TokenizerT tok, char* searchterm);
 
 void search(char* action, TokenizerT tok, Filelist files, Cache cache);
 
-
+/* Driver */
+int runsearch( int argc, char** argv );
 
 #endif
 /* SWIFT_CSEARCH_H_ */

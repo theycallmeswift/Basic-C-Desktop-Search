@@ -223,6 +223,46 @@ int HTNextItem(HTIterator iter, void** key, void** val);
 
 int getNumBuckets(HashTable table);
 
+/* hash
+ *
+ * Simple hashing function for strings.
+ *
+ * @param   obj         void* object to hash (string)
+ *
+ * @return  unsigned long hash
+ */
+
+unsigned long hash(void *obj);
+
+
+/* compStrings
+ *
+ * Void* wrapper for strcmp. To be used with 
+ * the HashTable's internal comparison function.
+ *
+ * @param   str1        1st string
+ * @param   str2        2nd string
+ *
+ * @return  -1          str1 < str2
+ * @return  0           str1 = str2
+ * @return  1           str1 > str2
+ */
+
+int compStrings(void *str1, void *str2);
+
+/* destroyString
+ *
+ * Void * wrapper for freeing strings. To be used with
+ * the HashTables's internal destroy function.
+ *
+ * @param   str         string to free
+ *
+ * @return  void
+ */
+
+void destroyString(void *str);
+
+
 
 #endif
 /* END SWIFT_HASHTABLE_H_ */

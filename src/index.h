@@ -13,7 +13,11 @@
 /********************************
  *          1. Includes         *
  ********************************/
-
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+#include <ftw.h>
 #include "hashtable.h"
 #include "tokenizer.h"
 #include "sorted-list.h"
@@ -98,6 +102,9 @@ int indexFiles(FILE* file, Entry list);
  */
 
 int indexWord(FILE *file, Word word);
+
+/* Driver */
+int runindex( int argc, char** argv );
 
 
 #endif /* SWIFT_INDEX_H_ */

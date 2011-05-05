@@ -38,62 +38,6 @@ struct Cache_ {
  * 3. Helper Functions      *
  ****************************/
 
-/* hash
- *
- * Simple hashing function for strings.
- *
- * @param   obj         void* object to hash (string)
- *
- * @return  unsigned long hash
- */
-
-unsigned long hash(void *obj)
-{
-	char *key;
-	int h;
-	
-	key = (char *) obj;
-	h=0;
-	while(*key) h=33*h + *key++;
-	return h;
-}
-
-/* printWordHT
- *
- * Wrapper for printing words with the HT print function.
- *
- * @param   key     Not used
- * @param   val     the word to print.
- *
- * @return  void
- */
-
-void printWordHT(void *key, void* val)
-{
-    if(val != NULL)
-    {
-        printWord((Word) val);
-        printf("->");
-    }
-}
-
-/* compStrings
- *
- * Void* wrapper for strcmp. To be used with 
- * the HashTable's internal comparison function.
- *
- * @param   str1        1st string
- * @param   str2        2nd string
- *
- * @return  -1          str1 < str2
- * @return  0           str1 = str2
- * @return  1           str1 > str2
- */
-
-int compStrings(void *str1, void *str2)
-{
-    return strcmp((char*)str1, (char*)str2);
-}
 
 /****************************
  * 4. Cache Functions       *

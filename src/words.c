@@ -348,3 +348,22 @@ int compWords(void* word1, void* word2)
     
     return strcmp(w1->word, w2->word);
 }
+
+/* printWordHT
+ *
+ * Wrapper for printing words with the HT print function.
+ *
+ * @param   key     Not used
+ * @param   val     the word to print.
+ *
+ * @return  void
+ */
+
+void printWordHT(void *key, void* val)
+{
+    if(val != NULL)
+    {
+        printWord((Word) val);
+        printf("->");
+    }
+}

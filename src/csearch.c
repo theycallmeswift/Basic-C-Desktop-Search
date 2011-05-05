@@ -10,14 +10,7 @@
 /****************************
  * 1. Includes              *
  ****************************/
- 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include "cache.h"
-#include "tokenizer.h"
-#include "words.h"
+
 #include "csearch.h"
 
 /****************************
@@ -620,7 +613,7 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
 }
 
 
-int main( int argc, char** argv )
+int runsearch( int argc, char** argv )
 {
     Cache cache;
     TokenizerT tok;
