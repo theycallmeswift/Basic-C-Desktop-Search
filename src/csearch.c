@@ -14,6 +14,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "cache.h"
 #include "tokenizer.h"
 #include "words.h"
@@ -27,6 +28,7 @@ struct Result_ {
     int filenum;
     int frequency;
     int numfiles;
+    double score;
     Result next;
 };
 
@@ -205,7 +207,8 @@ void resetResults(Filelist files)
 void sortResults(Filelist files)
 {
     Result curr, next, sorted, scurr, sprev;
-    int diff, inserted;
+    int inserted;
+    double diff;
     
     curr = files->results;
     sorted = NULL;
@@ -221,9 +224,9 @@ void sortResults(Filelist files)
         
         while(scurr != NULL && inserted == 0)
         {
-            diff = curr->frequency - scurr->frequency;
+            diff = curr->score - scurr->score;
             
-            if(diff >= 0)
+            if(diff >= 0.0)
             {
                 /* The new one is bigger than the current node */
                 if(sprev == NULL)
@@ -265,6 +268,36 @@ void sortResults(Filelist files)
     
     files->results = sorted;
 
+}
+
+/* scoreFile
+ *
+ * Function that computes the Term frequency and inverse document frequency
+ *
+ * @param   totalFiles              the total number of files in the index
+ * @param   filescontword           total number of files containing the word
+ * @param   freq                    frequency of the word in the document in question
+ *
+ * @return  double                  score
+ */
+
+double scoreFile(int totalFiles, int filescontword, int freq)
+{
+    /* N = Total files, Nt = Number of files containing the result, Ft = frequency in the file */
+    int Nt, N, Ft;
+    double IDFt, TFt;
+    
+    Nt = totalFiles;
+    N = filescontword;
+    Ft = freq;
+    
+    
+    IDFt = log((1.0 + ((double)N / Nt)));
+    TFt = 1 + log((double)Ft);
+    
+    if(DEBUG) printf("%f = %f * %f\n",IDFt * TFt, IDFt, TFt);
+    
+    return IDFt * TFt;
 }
 
 /* getWord
@@ -512,6 +545,7 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
                             result->filenum = ent->filenumber;
                             result->numfiles = 1;
                             result->frequency = ent->frequency;
+                            result->score = scoreFile(files->numfiles, found->numFiles, ent->frequency);
                             result->next = NULL;
                         }
                         else
@@ -525,6 +559,7 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
                                     /* Found it */
                                     result->numfiles++;
                                     result->frequency += ent->frequency;
+                                    result->score += scoreFile(files->numfiles, found->numFiles, ent->frequency);
                                     rfound = 1;
                                 }
                                 
@@ -540,6 +575,7 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
                                     result->filenum = ent->filenumber;
                                     result->numfiles = 1;
                                     result->frequency = ent->frequency;
+                                    result->score = scoreFile(files->numfiles, found->numFiles, ent->frequency);
                                     result->next = NULL;
                                 }
                                 result = result->next;

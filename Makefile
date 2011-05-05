@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS  = -ansi -Wall -g
+CCFLAGS  = -lm -ansi -Wall -g
 
 # UNIT TESTS
 

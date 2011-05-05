@@ -86,6 +86,19 @@ void resetResults(Filelist files);
 
 void sortResults(Filelist files);
 
+/* scoreFile
+ *
+ * Function that computes the Term frequency and inverse document frequency
+ *
+ * @param   totalFiles              the total number of files in the index
+ * @param   filescontword           total number of files containing the word
+ * @param   freq                    frequency of the word in the document in question
+ *
+ * @return  double                  score
+ */
+
+double scoreFile(int totalFiles, int filescontword, int freq);
+
 /* getWord
  *
  * This is the function that is responsible for retriving the
