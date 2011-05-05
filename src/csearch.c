@@ -17,19 +17,6 @@
  * 2. Structs               *
  ****************************/
 
-struct Result_ {
-    int filenum;
-    int frequency;
-    int numfiles;
-    double score;
-    Result next;
-};
-
-struct Filelist_ {
-    char** list;
-    Result results;
-    int numfiles;
-};
 
 
 /****************************
@@ -511,7 +498,7 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
                 if(found == NULL)
                 {
                     found = getWord(tok, term);
-                    insertWord(cache, found);
+                    if(found != NULL) insertWord(cache, found);
                 }
                 else
                 {
@@ -603,12 +590,14 @@ void search(char* action, TokenizerT tok, Filelist files, Cache cache)
     {
         if(stype == 0 || (stype == 1 && result->numfiles == numterms))
         {
-            printf("%s\n", files->list[result->filenum]);
+            /* printf("%s\n", files->list[result->filenum]); */
+        }
+        else
+        {
+            result->frequency = -1;
         }
         result = result->next;
     }
-    
-    resetResults(files);
 
 }
 
@@ -620,6 +609,7 @@ int runsearch( int argc, char** argv )
     int counter;
     char *cachesize, action[1024];
     Filelist files;
+    Result result;
     
     /* Check for the help flag */
     if(argc >= 2 && argv[1][0] == '-' && argv[1][1] == 'h')
@@ -688,8 +678,19 @@ int runsearch( int argc, char** argv )
         else
         {
             printf("Command not found.\n");
-            printCache(cache);
         }
+        
+        result = files->results;
+        while(result != NULL)
+        {
+            if(result->frequency > 0)
+            {
+                printf("%s\n", files->list[result->filenum]);
+            }
+            result = result->next;
+        }
+        
+        resetResults(files);
         
         printf("search> ");
         fgets(action, 1024, stdin);

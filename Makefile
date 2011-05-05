@@ -14,7 +14,7 @@ TEST2_SRC    =    tests/test_sortedlist.c sorted-list.o
 TESTS        =    $(TEST1) $(TEST2)
 
 
-all: index search cleanobjs
+all: index search gui-search cleanobjs
 
 index: hashtable.o tokenizer.o sorted-list.o words.o index.o src/indexdriver.c
 	$(CC) $(CCFLAGS) -o index hashtable.o tokenizer.o sorted-list.o words.o index.o src/indexdriver.c
@@ -25,6 +25,10 @@ index: hashtable.o tokenizer.o sorted-list.o words.o index.o src/indexdriver.c
 search: hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o src/searchdriver.c
 	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o src/searchdriver.c
 	mv search bin/search
+	
+gui-search: hashtable.o tokenizer.o sorted-list.o words.o index.o search.o cache.o src/gui.c src/gui.h
+	$(CC) $(CCFLAGS) -o gui-search hashtable.o tokenizer.o sorted-list.o words.o index.o search.o cache.o src/gui.c `pkg-config --libs --cflags gtk+-2.0`
+	mv gui-search bin/gui-search
 
 cache.o: src/cache.c src/cache.h src/hashtable.h src/words.h
 	$(CC) $(CCFLAGS) -o cache.o -c src/cache.c
@@ -68,4 +72,4 @@ cleanobjs:
 
 clean:
 	-rm -rf *.o 
-	-rm -rf bin/index bin/files bin/search
+	-rm -rf bin/index bin/files bin/search bin/gui-search

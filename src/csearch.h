@@ -39,6 +39,21 @@ typedef struct Result_* Result;
 struct Filelist_;
 typedef struct Filelist_* Filelist;
 
+
+struct Result_ {
+    int filenum;
+    int frequency;
+    int numfiles;
+    double score;
+    Result next;
+};
+
+struct Filelist_ {
+    char** list;
+    Result results;
+    int numfiles;
+};
+
 /********************************
  * 3. File List Functions       *
  ********************************/

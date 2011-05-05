@@ -1,0 +1,8 @@
+My initial test plan was to develop a suit of unit tests that could be optionally compiled by running make tests.  I had enough time to finish the tests for both the hashtable and the sorted list, but I didn't have enough time to finish the tests for the rest of the components.  To compensate I wrote extremely intensive error handling throughout the program.  
+
+If I were to asked to develop a test plan to see if the program scaled I would start by finishing the standalone unit tests and then I would run the indexer and search tools on a large set of rapidly changing files.  I actually had a pretty good set of files to test on once I started indexing the entire project directory because the indexer would pick up my version control files (git). The files in the .git directory contain a large variety of strings and a very deep folder structure.
+
+Feel free to take a look at my unit tests in the  tests/ directory to see how I was doing things.
+
+I based my cache off of another program I wrote, so you can also find some tests for the cache here : https://github.com/theycallmeswift/Direct-Mapped-Cache-Simulation
+

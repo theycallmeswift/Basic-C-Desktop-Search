@@ -10,6 +10,9 @@
 #ifndef SWIFT_GUI_H_
 #define SWIFT_GUI_H_
 
+#include "cache.h"
+#include "tokenizer.h"
+#include "words.h"
 #include "csearch.h"
 #include "index.h"
 
