@@ -4,7 +4,7 @@
  * Author: Mike Swift
  * Email: theycallmeswift@gmail.com
  * Date Created: March 8th, 2011
- * Date Modified: April 23rd, 2011
+ * Date Modified: May 4th, 2011
  */
 
 #ifndef SWIFT_HASHTABLE_H_
@@ -211,6 +211,18 @@ void destroyIterHT(HTIterator iter);
  */
 
 int HTNextItem(HTIterator iter, void** key, void** val);
+
+/* getNumBuckets
+ *
+ * Returns the current number of buckets.
+ *
+ * @param       table           hashtable object
+ *
+ * @return      int             number of buckets
+ */
+
+int getNumBuckets(HashTable table);
+
 
 #endif
 /* END SWIFT_HASHTABLE_H_ */

@@ -18,6 +18,7 @@
 struct TokenizerT_
 {
     FILE *file;
+    char *filename;
     char *allowedCharacters;
 };
 typedef struct TokenizerT_* TokenizerT;
@@ -57,6 +58,27 @@ void TKDestroy(TokenizerT tk);
 
 char *TKGetNextToken(TokenizerT tk);
 
+/* TKReset
+ *
+ * Resets the tokenizer to the start of the current file.
+ *
+ * @param   tok         Tokenizer object
+ *
+ * @return  void
+ */
+
+void TKReset(TokenizerT tok);
+
+/* adjustAllowedChars
+ *
+ * Function that resets the allowed characters to whatever the 
+ * user specifies.
+ *
+ * @param   tok         Tokenizer object
+ * @param   allowed     String of allowed characters
+ *
+ * @return  void
+ */
 
 void adjustAllowedChars(TokenizerT tok, char* allowed);
 

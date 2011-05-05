@@ -88,7 +88,10 @@ void destroyWord(void *wordptr)
         while(curr != NULL)
         {
             next = curr->next;
-            free(curr->filename);
+            if(curr->filename != NULL)
+            {
+                free(curr->filename);
+            }
             free(curr);
             curr = next;
         }
@@ -99,14 +102,17 @@ void destroyWord(void *wordptr)
 
 /* createEntry
  *
- * Creates a brand new entry object.
+ * Creates a brand new entry object. If NULL is passed in for 
+ * filename, it will be stored as NULL.
  *
  * @param   filename        the filename where the entry occured
+ * @param   filenum         alternative to name is number
+ * @param   frequency       frequency of the word in file
  *
  * @return  success         new Entry
  * @return  failure         NULL
  */
-Entry createEntry(char *filename)
+Entry createEntry(char *filename, int filenum, int frequency)
 {
     Entry ent;
     
@@ -117,17 +123,25 @@ Entry createEntry(char *filename)
         return NULL;
     }
     
-    ent->filename = (char*) malloc( sizeof(char) * (strlen(filename) + 1));
-    if(ent->filename == NULL)
+    if(filename != NULL)
     {
-        free(ent);
-        fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
-        return NULL;
+        ent->filename = (char*) malloc( sizeof(char) * (strlen(filename) + 1));
+        if(ent->filename == NULL)
+        {
+            free(ent);
+            fprintf(stderr, "Error: Could not allocate memory for Entry.\n");
+            return NULL;
+        }
+        strcpy(ent->filename, filename);
     }
-
-    strcpy(ent->filename, filename);
+    else
+    {
+        ent->filename = NULL;
+    }
     
-    ent->frequency = 1;
+    ent->frequency = frequency;
+    ent->filenumber = filenum;
+    
     ent->next = NULL;
     
     return ent;
@@ -181,7 +195,7 @@ int insertEntry(Word word, char *filename)
     }
     
     /* Filename is not in the list, create a new entry and insert it at the head */
-    ent = createEntry(filename);
+    ent = createEntry(filename, -1, 1);
     
     ent->next = word->head;
     word->head = ent;
@@ -297,7 +311,15 @@ void printWord(void* ptr)
         
         while(ent != NULL)
         {
-            printf("[%s, %i]->", ent->filename, ent->frequency);
+            if(ent->filename != NULL)
+            {
+                printf("[%s (%i), %i]->", ent->filename, ent->filenumber, ent->frequency);
+            }
+            else
+            {
+                printf("[%i, %i]->", ent->filenumber, ent->frequency);
+            }
+            
             ent = ent->next;
         }
         

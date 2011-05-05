@@ -23,6 +23,7 @@
  ********************************/
 HashTable wordTable;
 Entry file_list;
+int totalFiles;
 
 /********************************
  *      3. Helper Functions     *
@@ -152,9 +153,10 @@ int tokenizeFile( char* filename )
     Entry file;
     
     /* Insert filename into the file_list */
-    file = createEntry(filename);
+    file = createEntry(filename, -1, 1);
     file->next = file_list;
     file_list = file;
+    totalFiles++;
         
     /* Create a Tokenizer for the file */
     tok = TKCreate(STRING_CHARS, filename);
@@ -278,7 +280,10 @@ int indexFiles(FILE* file, Entry list)
         return 0;
     }
     
-    fputs("<files>\n", file);
+    fputs("<files> ", file);
+    
+    sprintf(buffer, "%i\n", totalFiles);
+    fputs(buffer, file);
     
     i = 0;
     
@@ -306,7 +311,7 @@ int indexFiles(FILE* file, Entry list)
  *
  * Writes a Word to an inverted index in the following format:
  *
- * <list> Word
+ * <list> Word #files
  *      file#: frequency
  *      file#: frequency
  *      ... etc ...
@@ -342,7 +347,10 @@ int indexWord(FILE *file, Word word)
     /* Write the <list> header */
     fputs("<list> ", file);
     fputs(word->word, file);
-    fputs("\n", file);
+    
+    sprintf(buffer, " %i\n", word->numFiles);
+    
+    fputs(buffer, file);
     
     /* Sort the Entries */
     i = sortEntries(word);
@@ -397,6 +405,8 @@ int main( int argc, char** argv )
     SortedListT wordList;
     SortedListIterT iter;
     FILE *index;
+    
+    totalFiles = 0;
     
     /* Validate the inputs */
     if( (argc == 2 && argv[1][0] == '-' && argv[1][1] == 'h') || argc < 3 )

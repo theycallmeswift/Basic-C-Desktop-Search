@@ -23,6 +23,7 @@
 
 struct Entry_ {
     char *filename;
+    int filenumber;
     int frequency;
     struct Entry_* next;
 };
@@ -94,14 +95,17 @@ int insertEntry(Word word, char *filename);
 
 /* createEntry
  *
- * Creates a brand new entry object.
+ * Creates a brand new entry object. If NULL is passed in for 
+ * filename, it will be stored as NULL.
  *
  * @param   filename        the filename where the entry occured
+ * @param   filenum         alternative to name is number
+ * @param   frequency       frequency of the word in file
  *
  * @return  success         new Entry
  * @return  failure         NULL
  */
-Entry createEntry(char *filename);
+Entry createEntry(char *filename, int filenum, int frequency);
 
 /* sortEntries
  *

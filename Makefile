@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS  = -ansi -pedantic -Wall -g
+CCFLAGS  = -ansi -Wall -g
 
 # UNIT TESTS
 
@@ -22,12 +22,15 @@ index: hashtable.o tokenizer.o sorted-list.o words.o index.o
 	mkdir -p bin/files
 	cp tests/files/* bin/files
 
-search: hashtable.o tokenizer.o sorted-list.o words.o search.o
-	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o
+search: hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o
+	$(CC) $(CCFLAGS) -o search hashtable.o tokenizer.o sorted-list.o words.o search.o cache.o
 	mv search bin/search
 
-search.o: src/search.c src/search.h src/sorted-list.h src/hashtable.h src/tokenizer.h src/words.h
-	$(CC) $(CCFLAGS) -o search.o -c src/search.c
+cache.o: src/cache.c src/cache.h src/hashtable.h src/words.h
+	$(CC) $(CCFLAGS) -o cache.o -c src/cache.c
+
+search.o: src/csearch.c src/csearch.h src/tokenizer.h src/words.h
+	$(CC) $(CCFLAGS) -o search.o -c src/csearch.c
 	
 index.o: src/index.c src/index.h src/sorted-list.h src/hashtable.h src/tokenizer.h src/words.h
 	$(CC) $(CCFLAGS) -o index.o -c src/index.c

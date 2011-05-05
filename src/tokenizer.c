@@ -96,11 +96,44 @@ TokenizerT TKCreate(char *tc, char *fn)
         printf("ERROR: Malloc failed");
 		exit(-1);
     }
-
+    
     strcpy( tok->allowedCharacters, tc );
+    
+    tok->filename = (char*) malloc(sizeof(char) * (strlen(fn) + 1));
+    if(tok->filename == NULL)
+    {
+        fprintf(stderr, "ERROR: Malloc failed.\n");
+        exit(-1);
+    }
+    strcpy(tok->filename, fn);
 
     return tok;
 }
+
+/* TKReset
+ *
+ * Resets the tokenizer to the start of the current file.
+ *
+ * @param   tok         Tokenizer object
+ *
+ * @return  void
+ */
+
+void TKReset(TokenizerT tok)
+{
+    rewind(tok->file);
+}
+
+/* adjustAllowedChars
+ *
+ * Function that resets the allowed characters to whatever the 
+ * user specifies.
+ *
+ * @param   tok         Tokenizer object
+ * @param   allowed     String of allowed characters
+ *
+ * @return  void
+ */
 
 void adjustAllowedChars(TokenizerT tok, char* allowed)
 {
@@ -136,6 +169,11 @@ void TKDestroy(TokenizerT tk)
         if(tk->allowedCharacters != NULL)
         {
             free(tk->allowedCharacters);
+        }
+        
+        if(tk->filename != NULL)
+        {
+            free(tk->filename);
         }
 
         free(tk);

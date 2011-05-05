@@ -4,7 +4,7 @@
  * Author: Mike Swift
  * Email: theycallmeswift@gmail.com
  * Date Created: March 8th, 2011
- * Date Modified: April 23rd, 2011
+ * Date Modified: May 4th, 2011
  */
 
 #include <stdio.h>
@@ -213,7 +213,6 @@ HashTable createHT(hash_func hash, comp_func comp, destroy_key key, destroy_val 
     {
         table->buckets[i] = NULL;
     }
-    
     
     return table; 
 }
@@ -618,4 +617,19 @@ int HTNextItem(HTIterator iter, void** key, void** val)
     }
     
     return 0;
+}
+
+
+/* getNumBuckets
+ *
+ * Returns the current number of buckets.
+ *
+ * @param       table           hashtable object
+ *
+ * @return      int             number of buckets
+ */
+
+int getNumBuckets(HashTable table)
+{
+    return table->numBuckets;
 }
