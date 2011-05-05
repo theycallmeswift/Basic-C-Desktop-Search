@@ -74,6 +74,18 @@ void destroyFilelist(Filelist files);
  
 void resetResults(Filelist files);
 
+/* sortResults
+ *
+ * Sorts the results in order of frequency (Eventually this
+ * will be score)
+ *
+ * @param   files       filelist object
+ *
+ * @return  void
+ */
+
+void sortResults(Filelist files);
+
 /* getWord
  *
  * This is the function that is responsible for retriving the
@@ -95,6 +107,23 @@ void resetResults(Filelist files);
  */  
 
 Word getWord(TokenizerT tok, char* searchterm);
+
+/* search
+ *
+ * This function searchs for all the terms entered by the user.
+ * It first checks the cache to see if the term in question is
+ * present, and if not it searches the index file for the word.
+ * It creates a linked list of results and then sorts them based
+ * on score and the logical operation being performed.
+ *
+ * @param   action          string containing the search type and terms
+ * @param   tok             tokenizer object
+ * @param   files           filelist object
+ *
+ * @return  void
+ */
+
+void search(char* action, TokenizerT tok, Filelist files, Cache cache);
 
 
 

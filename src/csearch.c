@@ -73,10 +73,10 @@ Filelist getFilelist(TokenizerT tok)
     /* Make sure we are looking at the top of the file */
     
     str = TKGetNextToken(tok);
-    if(strcmp(str, "files") != 0)
+    if(str == 0 || strcmp(str, "files") != 0)
     {
         fprintf(stderr, "Error: Malformed index file.\n");
-        return NULL;
+        exit(-1);
     }
     free(str);
     
@@ -311,10 +311,10 @@ Word getWord(TokenizerT tok, char* searchterm)
             
             /* Skip the files */
             str = TKGetNextToken(tok);
-            if(strcmp(str, "files") != 0)
+            if(str == 0 || strcmp(str, "files") != 0)
             {
                 fprintf(stderr, "Error: Malformed index file.\n");
-                return NULL;
+                exit(-1);
             }
             free(str);
             
@@ -332,10 +332,10 @@ Word getWord(TokenizerT tok, char* searchterm)
         }
         
         /* Verify that we started on a list */
-        if(strcmp(str, "list") != 0)
+        if(str == 0 || strcmp(str, "list") != 0)
         {
-            fprintf(stderr, "Error: Malformed index file (%s).\n", str);
-            return NULL;
+            fprintf(stderr, "Error: Malformed index file.\n");
+            exit(-1);
         }
         
         free(str);
@@ -345,7 +345,7 @@ Word getWord(TokenizerT tok, char* searchterm)
         if(str == 0)
         {
             fprintf(stderr, "Error: Malformed index file.\n");
-            return NULL;
+            exit(-1);
         }
         
        
@@ -433,7 +433,23 @@ Word getWord(TokenizerT tok, char* searchterm)
     
 }
 
-void search(char* action, TokenizerT tok, Filelist files)
+/* search
+ *
+ * This function searchs for all the terms entered by the user.
+ * It first checks the cache to see if the term in question is
+ * present, and if not it searches the index file for the word.
+ * It creates a linked list of results and then sorts them based
+ * on score and the logical operation being performed.
+ *
+ * @param   action          string containing the search type and terms
+ * @param   tok             tokenizer object
+ * @param   files           filelist object
+ * @param   cache           Cache object
+ *
+ * @return  void
+ */
+
+void search(char* action, TokenizerT tok, Filelist files, Cache cache)
 {    
     char term[1024];
     int acounter, tcounter, numterms, cont, stype, rfound;
@@ -465,7 +481,16 @@ void search(char* action, TokenizerT tok, Filelist files)
                 
                 numterms++;
                 
-                found = getWord(tok, term);
+                found = searchCache(cache, term);
+                if(found == NULL)
+                {
+                    found = getWord(tok, term);
+                    insertWord(cache, found);
+                }
+                else
+                {
+                    if(DEBUG) printf("Found %s in cache.\n", term);
+                }
                 
                 if(found != NULL)
                 {
@@ -524,8 +549,6 @@ void search(char* action, TokenizerT tok, Filelist files)
                         
                         ent = ent->next;
                     }
-                    
-                    destroyWord(found);
                 }
             }
             /* always set the tcounter to 0 */
@@ -603,8 +626,22 @@ int main( int argc, char** argv )
         return 0;
     }
     
+    if(DEBUG) printf("Getting files\n");
+    
     /* Get the file list */
     files = getFilelist(tok);
+    if(files == NULL)
+    {
+        return 0;
+    }
+    
+    /* Create a cache */
+    cache = createCache(cachesize);
+    if(cache == NULL)
+    {
+        fprintf(stderr, "Error: Could not allocate space for Cache.\n");
+        return 0;
+    }
     
     /* Update the allowed characters */
     adjustAllowedChars(tok, STRING_CHARS);
@@ -617,19 +654,17 @@ int main( int argc, char** argv )
     {
         if(action[0] == 's' && (action[1] == 'o' || action[1] == 'a'))
         {
-            search(action, tok, files);
+            search(action, tok, files, cache);
         }
         else
         {
             printf("Command not found.\n");
+            printCache(cache);
         }
         
         printf("search> ");
         fgets(action, 1024, stdin);
     } 
-    
-    /* Create a cache */
-    cache = createCache(cachesize);
     
     /* Ok, now we're done. Burn it down */
     destroyCache(cache);

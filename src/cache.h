@@ -10,11 +10,17 @@
 #ifndef SWIFT_CACHE_H_
 #define SWIFT_CACHE_H_
 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include "hashtable.h"
+#include "words.h"
+
 /********************************
  * 1. Constants                 *
  ********************************/
 
-#define CACHE_DEBUG 1
+#define CACHE_DEBUG 0
 
 
 /********************************
@@ -57,6 +63,33 @@ Cache createCache(char* cache_size);
  
 void destroyCache(Cache cache);
 
+/* printCache
+ *
+ * Function that prints out a detailed summary of the cache
+ *
+ * @param   cache       cache to print
+ *
+ * @return  void
+ */
+void printCache(Cache cache);
+
+/* insertWord
+ * 
+ * Inserts a word into the cache.  If the cache is full,
+ * words are cleared out 1 at a time until either there
+ * are no blocks left or there is enough room for the new
+ * word.
+ * 
+ * @param   cache           Cache object
+ * @param   word            word to insert
+ *
+ * @return  success         1 = nothing was removed, -1 = removed
+ * @return  failure         0
+ */
+
+int insertWord(Cache cache, Word word);
+
+Word searchCache(Cache cache, char* str);
 
 
 #endif
